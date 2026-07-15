@@ -1,6 +1,9 @@
-streamlit
-numpy
-pandas
-scikit-learn
-xgboost
-imbalanced-learnmatplotlib==3.7.1 
+streamlit 
+numpy 
+pandas 
+scikit-learn 
+xgboost 
+imbalanced-learn 
+matplotlib 
+seaborn 
+shap
