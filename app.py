@@ -1,12 +1,20 @@
+import pandas as pd
 import streamlit as st
 import pickle
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import shap
+
 
 # Load files
 model = pickle.load(open('loan_default_model.pkl', 'rb'))
 threshold = pickle.load(open('threshold.pkl', 'rb'))
+features =pickle.load(open('feature_names.pkl', 'rb'))
+target = pickle.load(open('target.pkl', 'rb'))
+X=pickle.load(open('X.pkl', 'rb'))
 
-st.title("🏦 Loan Default Predictor")
+st.title("Loan Default Predictor")
 st.write("Enter customer details to predict loan default risk")
 
 col1, col2 = st.columns(2)
@@ -36,3 +44,52 @@ if st.button("Predict"):
         st.error(f" High Risk! Probability of Default: {probability:.2%}")
     else:
         st.success(f" Low Risk! Probability of Default: {probability:.2%}")
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer(input_data)
+    shap_values.feature_names = ['Credit Limit', 'Age', 'Late 30-59',
+                                 'Debt Ratio', 'Income', 'Open Credits',
+                                 'Late 90+', 'Real Estate', 'Late 60-89',
+                                 'Dependents']
+    fig, ax = plt.subplots()
+    shap.plots.bar(shap_values[0], show=False)
+    st.pyplot(fig)
+
+
+#Feature Importance Chart
+with st.container():
+    st.header("Feature Importance Chart")
+    fig_imp=pd.Series(model.feature_importances_,
+                  index=['Credit Limit Used', 'Age', 'Late 30-59',
+                            'Debt Ratio', 'Monthly Income', 'Open Credits',
+                            'Late 90+', 'Real Estate', 'Late 60-89', 'Dependents'])
+    fig , ax=plt.subplots()
+    fig_imp.sort_values().plot(kind='barh', ax=ax)
+    ax.set_title("Feature Importance")
+    st.pyplot(fig)
+
+    st.header(" Exploratory Data Analysis")
+    st.subheader("Default vs Non-Default")
+    fig,ax=plt.subplots()
+    target.value_counts().plot(kind='bar', ax=ax)
+    ax.set_xlabel("0 = No Default, 1 = Default")
+    ax.set_ylabel("Count")
+    ax.set_title("Distribution of Loan Default")
+    st.pyplot(fig)
+
+    st.subheader("Correlation Matrix")
+    fig,ax=plt.subplots()
+    X.columns = ['Credit Limit', 'Age', 'Late 30-59',
+                 'Debt Ratio', 'Income', 'Open Credits',
+                 'Late 90+', 'Real Estate', 'Late 60-89', 'Dependents']
+    corr = X.corr()
+    cmap = sns.diverging_palette(230, 20, as_cmap=True)
+    sns.heatmap(corr,vmin=-1,vmax=1,cmap=cmap,ax=ax)
+    ax.set_title("Correlation Matrix")
+    st.pyplot(fig)
+
+
+
+
+
+
+
